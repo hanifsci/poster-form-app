@@ -77,6 +77,10 @@ class Poster extends Model
         'processing_fee',
         'total_amount',
 
+        'acc_count',
+        'acc_unit_cost',
+        'additional_charge',
+
         'status',
 
     ];

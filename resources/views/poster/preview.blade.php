@@ -360,11 +360,11 @@
                             <td class="value-cell">{{ $draft->lead_email }}</td>
                         </tr>
                         <tr>
-                            <td class="label-cell">Organisation</td>
+                            <td class="label-cell">College Name/Organisation Name</td>
                             <td class="value-cell">{{ $draft->lead_org }}</td>
                         </tr>
                         <tr>
-                            <td class="label-cell">Phone</td>
+                            <td class="label-cell">Mobile Number</td>
                             <td class="value-cell">{{ $leadPhone ?: '—' }}</td>
                         </tr>
                         <tr>
@@ -384,7 +384,7 @@
                             <td class="value-cell">{{ $draft->lead_country }}</td>
                         </tr>
                         <tr>
-                            <td class="label-cell">Zip</td>
+                            <td class="label-cell">Postal Code</td>
                             <td class="value-cell">{{ $draft->lead_zip }}</td>
                         </tr>
                     </table>
@@ -409,11 +409,11 @@
                             <td class="value-cell">{{ $draft->pp_email }}</td>
                         </tr>
                         <tr>
-                            <td class="label-cell">Organisation</td>
+                            <td class="label-cell">College Name/Organisation Name</td>
                             <td class="value-cell">{{ $draft->pp_org }}</td>
                         </tr>
                         <tr>
-                            <td class="label-cell">Phone</td>
+                            <td class="label-cell">Mobile Number</td>
                             <td class="value-cell">{{ $ppPhone ?: '—' }}</td>
                         </tr>
                         <tr>
@@ -443,7 +443,7 @@
                             <td class="value-cell">{{ $draft->pp_country }}</td>
                         </tr>
                         <tr>
-                            <td class="label-cell">Zip</td>
+                            <td class="label-cell">Postal Code</td>
                             <td class="value-cell">{{ $draft->pp_zip }}</td>
                         </tr>
                     </table>
@@ -488,7 +488,8 @@
                 <div class="glass section-card">
                     <h4 class="section-title">
                         <i class="fa-solid fa-user-group"></i>
-                        Accompanying Co-Authors
+                        <!-- Accompanying Co-Authors -->
+                        Please enter details of Accompanying Co-Author(s) at event
                     </h4>
 
                     <table class="info-table">
@@ -583,6 +584,10 @@
                         <tr>
                             <td class="label-cell">Base Amount</td>
                             <td class="value-cell">{{ $draft->base_amount ?: '—' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="label-cell">Additional Charges</td>
+                            <td class="value-cell">{{ $draft->additional_charge ?: '—' }}</td>
                         </tr>
                         <tr hidden>
                             <td class="label-cell">Discount Code</td>

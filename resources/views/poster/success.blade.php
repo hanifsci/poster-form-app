@@ -273,11 +273,11 @@
                             <td class="value-cell">{{ $poster->lead_email }}</td>
                         </tr>
                         <tr>
-                            <td class="label-cell">Organisation</td>
+                            <td class="label-cell">College Name/Organisation Name</td>
                             <td class="value-cell">{{ $poster->lead_org }}</td>
                         </tr>
                         <tr>
-                            <td class="label-cell">Phone</td>
+                            <td class="label-cell">Mobile Number</td>
                             <td class="value-cell">{{ $leadPhone ?: '—' }}</td>
                         </tr>
                         <tr>
@@ -297,7 +297,7 @@
                             <td class="value-cell">{{ $poster->lead_country }}</td>
                         </tr>
                         <tr>
-                            <td class="label-cell">Zip</td>
+                            <td class="label-cell">Postal Code</td>
                             <td class="value-cell">{{ $poster->lead_zip }}</td>
                         </tr>
                     </table>
@@ -322,11 +322,11 @@
                             <td class="value-cell">{{ $poster->pp_email }}</td>
                         </tr>
                         <tr>
-                            <td class="label-cell">Organisation</td>
+                            <td class="label-cell">College Name/Organisation Name</td>
                             <td class="value-cell">{{ $poster->pp_org }}</td>
                         </tr>
                         <tr>
-                            <td class="label-cell">Phone</td>
+                            <td class="label-cell">Mobile Number</td>
                             <td class="value-cell">{{ $ppPhone ?: '—' }}</td>
                         </tr>
                         <tr>
@@ -356,7 +356,7 @@
                             <td class="value-cell">{{ $poster->pp_country }}</td>
                         </tr>
                         <tr>
-                            <td class="label-cell">Zip</td>
+                            <td class="label-cell">Postal Code</td>
                             <td class="value-cell">{{ $poster->pp_zip }}</td>
                         </tr>
                     </table>
@@ -383,6 +383,10 @@
                         <tr>
                             <td class="label-cell">Base Amount</td>
                             <td class="value-cell">{{ $poster->base_amount ?: '—' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="label-cell">Additional Charges</td>
+                            <td class="value-cell">{{ $poster->additional_charge ?: '—' }}</td>
                         </tr>
                         <tr hidden>
                             <td class="label-cell">Discount Code</td>

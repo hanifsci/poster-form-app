@@ -495,20 +495,24 @@
                 <hr class="my-4">
 
                 <h2 class="h5 fw-bold mb-3">Please enter details of Accompanying Co-Author(s) at event</h2>
-                    <div class="d-flex justify-content-end mb-2">
-                        <button type="button" class="btn btn-outline-primary btn-sm" id="copyCoToAccBtn">
-                            Copy from co-authors
-                        </button>
-                    </div>
+                <div class="alert alert-warning py-2 mb-3">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    There will be a additional charges for each accompanying co-author.
+                </div>
+                <div class="d-flex justify-content-end mb-2">
+                    <button type="button" class="btn btn-outline-primary btn-sm" id="copyCoToAccBtn">
+                        Copy from co-authors
+                    </button>
+                </div>
 
-                    <div class="row g-3">
-                        @for ($i=1; $i<=4; $i++)
-                            <div class="col-md-6">
-                            <label class="form-label">Accompanying Co-Author {{ $i }}</label>
-                            <input class="form-control" name="acc_co_auth_name_{{ $i }}" maxlength="200"
-                                value="{{ old('acc_co_auth_name_'.$i, $draft->{'acc_co_auth_name_'.$i} ?? '') }}">
-                    </div>
-                    @endfor
+                <div class="row g-3">
+                    @for ($i=1; $i<=4; $i++)
+                        <div class="col-md-6">
+                        <label class="form-label">Accompanying Co-Author {{ $i }}</label>
+                        <input class="form-control" name="acc_co_auth_name_{{ $i }}" maxlength="200"
+                            value="{{ old('acc_co_auth_name_'.$i, $draft->{'acc_co_auth_name_'.$i} ?? '') }}">
+                </div>
+                @endfor
         </div>
     </div>
 
@@ -551,7 +555,7 @@
                 <!-- <input class="form-control" type="file" name="lead_auth_cv" accept=".doc,.docx,.pdf"> -->
                 <input class="form-control" type="file" name="lead_auth_cv" accept=".doc,.docx,.pdf"
                     {{ empty($draft?->lead_auth_cv_path) ? 'required' : '' }}>
-                
+
                 @if (!empty($draft?->lead_auth_cv_path))
                 <div class="help mt-1">
                     Uploaded file: {{ $draft->lead_auth_cv_original_name ?? 'file' }}
@@ -596,6 +600,10 @@
                         <div class="price-label">Base Price</div>
                         <div class="price-value" id="calc-base">—</div>
                     </div>
+                    <div class="price-line">
+                        <div class="price-label">Additional Charges</div>
+                        <div class="price-value" id="calc-additional">—</div>
+                    </div>
                     <div class="price-line" hidden>
                         <div class="price-label">Discount</div>
                         <div class="price-value" id="calc-discount">—</div>
@@ -622,6 +630,10 @@
                 <input type="hidden" name="gst_amount" id="gst_amount" value="{{ old('gst_amount', $draft?->gst_amount ?? '') }}">
                 <input type="hidden" name="processing_fee" id="processing_fee" value="{{ old('processing_fee', $draft?->processing_fee ?? '') }}">
                 <input type="hidden" name="total_amount" id="total_amount" value="{{ old('total_amount', $draft?->total_amount ?? '') }}">
+
+                <input type="hidden" name="acc_count" id="acc_count" value="{{ old('acc_count', $draft->acc_count ?? 0) }}">
+                <input type="hidden" name="acc_unit_cost" id="acc_unit_cost" value="{{ old('acc_unit_cost', $draft->acc_unit_cost ?? 0) }}">
+                <input type="hidden" name="additional_charge" id="additional_charge" value="{{ old('additional_charge', $draft->additional_charge ?? 0) }}">
             </div>
 
 
@@ -692,13 +704,12 @@
 
             function getNationality() {
                 const checked = document.querySelector('input[name="nationality"]:checked');
-                return checked ? checked.value : null; // "India" or "International"
+                return checked ? checked.value : null;
             }
 
             function fmt(currency, amount) {
                 const n = Number(amount || 0);
                 const fixed = n.toFixed(2);
-
                 if (currency === 'INR') return `₹${fixed}`;
                 if (currency === 'USD') return `$${fixed}`;
                 return fixed;
@@ -709,7 +720,6 @@
                 const intlRow = el('tariff-row-intl');
                 if (!indiaRow || !intlRow) return;
 
-                // reset
                 indiaRow.style.outline = 'none';
                 intlRow.style.outline = 'none';
 
@@ -721,8 +731,9 @@
                 const select = el('paymode');
                 if (!select) return;
 
-                const current = select.value;
-                select.innerHTML = `<option value="" disabled ${current ? '' : 'selected'}>-- Select payment mode --</option>`;
+                const existingValue = select.value;
+
+                select.innerHTML = `<option value="" disabled ${existingValue ? '' : 'selected'}>-- Select payment mode --</option>`;
 
                 if (nat === 'India') {
                     const opt = document.createElement('option');
@@ -730,42 +741,52 @@
                     opt.textContent = 'CCAvenue (Indian Payments)';
                     select.appendChild(opt);
 
-                    // auto-select if empty
-                    if (!current) select.value = opt.value;
-                }
-
-                if (nat === 'International') {
+                    // force correct option
+                    select.value = opt.value;
+                } else if (nat === 'International') {
                     const opt = document.createElement('option');
                     opt.value = 'PayPal (International payments)';
                     opt.textContent = 'PayPal (International payments)';
                     select.appendChild(opt);
 
-                    if (!current) select.value = opt.value;
+                    select.value = opt.value;
                 }
+            }
+
+            function countAccompanying() {
+                let count = 0;
+                for (let i = 1; i <= 4; i++) {
+                    const input = document.querySelector(`[name="acc_co_auth_name_${i}"]`);
+                    if (input && input.value.trim() !== '') count++;
+                }
+                return count;
             }
 
             function recalc() {
                 const nat = getNationality();
 
-                // If no nationality selected yet
+                // No nationality selected
                 if (!nat) {
                     el('calc-badge').textContent = 'Select nationality';
                     el('calc-currency').textContent = '—';
                     el('calc-base').textContent = '—';
-                    el('calc-discount').textContent = '—';
+                    el('calc-additional').textContent = '—';
                     el('calc-gst').textContent = '—';
                     el('calc-proc').textContent = '—';
                     el('calc-total').textContent = '—';
 
-                    // clear hidden fields (don’t submit junk)
+                    // Clear hidden fields
                     el('currency').value = '';
                     el('base_amount').value = '';
                     el('gst_amount').value = '';
                     el('processing_fee').value = '';
                     el('total_amount').value = '';
 
+                    el('acc_count').value = '0';
+                    el('acc_unit_cost').value = '0';
+                    el('additional_charge').value = '0';
+
                     setTariffHighlight(null);
-                    setPaymodeOptions(null);
                     return;
                 }
 
@@ -775,25 +796,30 @@
                 const currency = (nat === 'India') ? 'INR' : 'USD';
                 const base = (nat === 'India') ? INR_BASE : USD_BASE;
 
-                // Discount is hidden for now (0)
-                const discount = Number(el('discount_amount').value || 0);
+                const discount = Number(el('discount_amount')?.value || 0);
 
+                // accompanying
+                const accCount = countAccompanying();
+                const accUnitCost = base; // your current rule: unit cost = base
+                const additional = accUnitCost * accCount;
 
-                // GST 18% on base
-                const gst = (base - discount) * GST_RATE;
+                const subTotal = (base + additional) - discount;
 
-                // Processing charge on (base + gst - discount)
+                // GST 18% on subtotal
+                const gst = subTotal * GST_RATE;
+
+                // Processing charge on (subtotal + gst)
                 const procRate = (nat === 'India') ? PROC_IN : PROC_INT;
-                const procBase = (base - discount) + gst;
+                const procBase = subTotal + gst;
                 const proc = procBase * procRate;
 
                 const total = procBase + proc;
 
-                // Update UI
+                // UI update
                 el('calc-badge').textContent = nat;
                 el('calc-currency').textContent = currency;
                 el('calc-base').textContent = fmt(currency, base);
-                el('calc-discount').textContent = fmt(currency, discount);
+                el('calc-additional').textContent = fmt(currency, additional);
 
                 el('calc-gst').textContent = fmt(currency, gst);
 
@@ -805,30 +831,40 @@
                 el('calc-proc').textContent = fmt(currency, proc);
                 el('calc-total').textContent = fmt(currency, total);
 
-                // Hidden fields to store in DB (store raw numbers as strings)
+                // Hidden fields (DB)
                 el('currency').value = currency;
-                el('base_amount').value = String(base);
+                el('base_amount').value = base.toFixed(2);
+
+                el('acc_count').value = String(accCount);
+                el('acc_unit_cost').value = accUnitCost.toFixed(2);
+                el('additional_charge').value = additional.toFixed(2);
+
                 el('gst_amount').value = gst.toFixed(2);
                 el('processing_fee').value = proc.toFixed(2);
                 el('total_amount').value = total.toFixed(2);
-
-                // Optional: auto-fill paymode hidden value already submitted by select
-                // (your form submits paymode directly)
             }
 
-            // Hook nationality change
+            // nationality change
             document.querySelectorAll('input[name="nationality"]').forEach(r => {
                 r.addEventListener('change', recalc);
             });
 
-            // Ensure payment mode selection exists (in case of edit page)
-            const paymodeSelect = el('paymode');
-            if (paymodeSelect) paymodeSelect.addEventListener('change', recalc);
+            // accompanying fields change
+            for (let i = 1; i <= 4; i++) {
+                const input = document.querySelector(`[name="acc_co_auth_name_${i}"]`);
+                if (input) input.addEventListener('input', recalc);
+            }
 
-            // Run on load (handles edit/prefill)
+            // also recalc on load (edit mode)
             recalc();
+
+            // also when copy co-authors runs, it sets values programmatically - trigger recalc after copy
+            const copyBtn = document.getElementById('copyCoToAccBtn');
+            if (copyBtn) copyBtn.addEventListener('click', () => setTimeout(recalc, 0));
+
         })();
     </script>
+
     <!-- Real time alter for email in lead auther -->
     <script>
         (function() {

@@ -1,211 +1,5 @@
 <?php
 
-// namespace App\Http\Controllers;
-
-// use App\Models\Poster;
-// use App\Models\PosterDraft;
-// use Illuminate\Http\Request;
-// use Illuminate\Support\Str;
-
-// class PosterRegistrationController extends Controller
-// {
-//     // Step 1: Show register form
-//     public function create()
-//     {
-//         return view('poster.register');
-//     }
-
-//     // Step 1: Store into drafts + redirect to preview
-//     public function storeDraft(Request $request)
-//     {
-//         $data = $request->validate([
-//             'name'  => ['required', 'string', 'max:150'],
-//             'email' => ['required', 'email', 'max:200'],
-//             'title' => ['required', 'string', 'max:200'],
-//         ]);
-
-//         $draft = PosterDraft::create([
-//             'token' => (string) Str::uuid(),
-//             ...$data,
-//         ]);
-
-//         // Keep token in session to reduce link sharing risk (optional but good)
-//         $request->session()->put('poster_draft_token', $draft->token);
-
-//         return redirect()->route('poster.preview', ['token' => $draft->token]);
-//     }
-
-//     // Step 2: Preview page (read from drafts)
-//     public function preview(Request $request, string $token)
-//     {
-//         $draft = PosterDraft::where('token', $token)->firstOrFail();
-
-//         // Optional safety: ensure token matches session (prevents random guessing)
-//         $sessionToken = $request->session()->get('poster_draft_token');
-//         if ($sessionToken !== $token) {
-//             abort(403, 'This draft does not belong to your session.');
-//         }
-
-//         return view('poster.preview', compact('draft'));
-//     }
-
-//     // Step 2: Final submit (copy to posters) + redirect to success
-//     public function submit(Request $request, string $token)
-//     {
-//         $draft = PosterDraft::where('token', $token)->firstOrFail();
-
-//         // Same session safety check
-//         $sessionToken = $request->session()->get('poster_draft_token');
-//         if ($sessionToken !== $token) {
-//             abort(403, 'This draft does not belong to your session.');
-//         }
-
-//         // Create final record
-//         $poster = Poster::create([
-//             'draft_token' => $draft->token,
-//             'name'        => $draft->name,
-//             'email'       => $draft->email,
-//             'title'       => $draft->title,
-//         ]);
-
-//         // Optional: delete draft after submit (prevents duplicate submits)
-//         $draft->delete();
-
-//         // Clear session token
-//         $request->session()->forget('poster_draft_token');
-
-//         return redirect()->route('poster.success', ['id' => $poster->id]);
-//     }
-
-//     // Step 3: Success page
-//     public function success(int $id)
-//     {
-//         $poster = Poster::findOrFail($id);
-
-//         return view('poster.success', compact('poster'));
-//     }
-// }
-
-// Revised Controller with Edit Draft Functionality for demo purposes
-// namespace App\Http\Controllers;
-
-// use App\Models\Poster;
-// use App\Models\PosterDraft;
-// use Illuminate\Http\Request;
-// use Illuminate\Support\Str;
-
-// class PosterRegistrationController extends Controller
-// {
-//     // Step 1 (blank)
-//     public function create()
-//     {
-//         return view('poster.register', [
-//             'draft' => null,
-//         ]);
-//     }
-
-//     // Step 1 (prefilled from draft)
-//     public function edit(Request $request, string $token)
-//     {
-//         $draft = PosterDraft::where('token', $token)->firstOrFail();
-
-//         // Safety: draft must belong to this session (optional but recommended)
-//         $sessionToken = $request->session()->get('poster_draft_token');
-//         if ($sessionToken !== $token) {
-//             abort(403, 'This draft does not belong to your session.');
-//         }
-
-//         return view('poster.register', [
-//             'draft' => $draft,
-//         ]);
-//     }
-
-//     // Step 1 POST: create OR update draft, then go preview
-//     public function storeDraft(Request $request)
-//     {
-//         $data = $request->validate([
-//             'token' => ['nullable', 'uuid'],
-//             'name'  => ['required', 'string', 'max:150'],
-//             'email' => ['required', 'email', 'max:200'],
-//             'title' => ['required', 'string', 'max:200'],
-//         ]);
-
-//         $token = $data['token'] ?? null;
-//         unset($data['token']);
-
-//         if ($token) {
-//             // update existing draft
-//             $draft = PosterDraft::where('token', $token)->firstOrFail();
-
-//             // Safety check (session ownership)
-//             $sessionToken = $request->session()->get('poster_draft_token');
-//             if ($sessionToken !== $token) {
-//                 abort(403, 'This draft does not belong to your session.');
-//             }
-
-//             $draft->update($data);
-//         } else {
-//             // create new draft
-//             $draft = PosterDraft::create([
-//                 'token' => (string) Str::uuid(),
-//                 ...$data,
-//             ]);
-
-//             // store token in session for ownership checks
-//             $request->session()->put('poster_draft_token', $draft->token);
-//         }
-
-//         return redirect()->route('poster.preview', ['token' => $draft->token]);
-//     }
-
-//     // Step 2: preview
-//     public function preview(Request $request, string $token)
-//     {
-//         $draft = PosterDraft::where('token', $token)->firstOrFail();
-
-//         $sessionToken = $request->session()->get('poster_draft_token');
-//         if ($sessionToken !== $token) {
-//             abort(403, 'This draft does not belong to your session.');
-//         }
-
-//         return view('poster.preview', compact('draft'));
-//     }
-
-//     // Step 2: submit (copy draft to posters, KEEP draft as backup)
-//     public function submit(Request $request, string $token)
-//     {
-//         $draft = PosterDraft::where('token', $token)->firstOrFail();
-
-//         $sessionToken = $request->session()->get('poster_draft_token');
-//         if ($sessionToken !== $token) {
-//             abort(403, 'This draft does not belong to your session.');
-//         }
-
-//         $poster = Poster::create([
-//             'draft_token' => $draft->token,
-//             'name'        => $draft->name,
-//             'email'       => $draft->email,
-//             'title'       => $draft->title,
-//         ]);
-
-//         // Keep the draft as backup (do NOT delete)
-//         // Optional: you can later add a "submitted_at" column or status in drafts table.
-
-//         // Clear session token so the token can’t be reused easily
-//         $request->session()->forget('poster_draft_token');
-
-//         return redirect()->route('poster.success', ['id' => $poster->id]);
-//     }
-
-//     // Step 3: success
-//     public function success(int $id)
-//     {
-//         $poster = Poster::findOrFail($id);
-
-//         return view('poster.success', compact('poster'));
-//     }
-// }
-
 namespace App\Http\Controllers;
 
 use App\Models\Poster;
@@ -629,18 +423,22 @@ class PosterRegistrationController extends Controller
                     $draft = PosterDraft::where('token', $token)->first();
                     return empty($draft?->sess_abstract_path); // require if not already uploaded
                 }),
-                'file', 'max:2048', 'mimes:doc,docx,pdf'
+                'file',
+                'max:2048',
+                'mimes:doc,docx,pdf'
             ],
             'lead_auth_cv' => [
                 Rule::requiredIf(function () use ($request) {
 
                     $token = $request->input('token');
-                    
+
                     if (!$token) return true;
                     $draft = PosterDraft::where('token', $token)->first();
                     return empty($draft?->lead_auth_cv_path);
                 }),
-                'file', 'max:2048', 'mimes:doc,docx,pdf'
+                'file',
+                'max:2048',
+                'mimes:doc,docx,pdf'
             ],
 
 
@@ -657,6 +455,11 @@ class PosterRegistrationController extends Controller
             'discount_amount'  => ['nullable',  'numeric'],
             'gst_amount'       => ['nullable',  'numeric'],
             'processing_fee'   => ['nullable',  'numeric'],
+
+            // Extra fields (we accept but will recompute)
+            'acc_count'         => ['nullable', 'integer', 'min:0', 'max:4'],
+            'acc_unit_cost'     => ['nullable', 'numeric', 'min:0'],
+            'additional_charge' => ['nullable', 'numeric', 'min:0'],
         ]);
 
         $token = $validated['token'] ?? null;
@@ -665,17 +468,69 @@ class PosterRegistrationController extends Controller
         // Handle uploads into $validated so create/update can use it
         $validated = $this->handleUploads($request, $validated);
 
+        /*
+    |--------------------------------------------------------------------------
+    | SERVER-SIDE AUTHORITATIVE PRICING (ADD HERE)
+    |--------------------------------------------------------------------------
+    | We recompute pricing based on nationality + accompanying count so users
+    | cannot manipulate hidden fields.
+    */
+        $nat = $validated['nationality'];
+
+        // Base values by nationality
+        $currency = $nat === 'India' ? 'INR' : 'USD';
+        $baseAmount = $nat === 'India' ? 3000 : 50;
+
+        // Force paymode to match nationality (don’t trust client)
+        $validated['paymode'] = $nat === 'India'
+            ? 'CCAvenue (Indian Payments)'
+            : 'PayPal (International payments)';
+
+        $validated['currency'] = $currency;
+        $validated['base_amount'] = $this->money((float) $baseAmount);
+
+        $discount = (float) ($validated['discount_amount'] ?? 0);
+
+        // Force safe defaults so NOT NULL decimal columns never get NULL
+        $validated['discount_amount'] = $this->money($discount);
+        $validated['discount_code'] = $validated['discount_code'] ?? null; // ok to be null if column is nullable
+
+        // Count accompanying co-authors from the actual name fields
+        $accCount = $this->countAccompanying($validated);
+
+        // Your current rule: unit cost = base amount
+        $accUnitCost = (float) $baseAmount;
+        $additional = $accUnitCost * $accCount;
+
+        // Subtotal = base + additional - discount
+        $subTotal = ($baseAmount + $additional) - $discount;
+
+        // GST = 18% of subtotal
+        $gst = $subTotal * 0.18;
+
+        // Processing fee = on (subtotal + gst)
+        $procRate = $nat === 'India' ? 0.03 : 0.09;
+        $processing = ($subTotal + $gst) * $procRate;
+
+        // Total
+        $total = $subTotal + $gst + $processing;
+
+        // Store breakdown fields
+        $validated['acc_count'] = $accCount;
+        $validated['acc_unit_cost'] = $this->money($accUnitCost);
+        $validated['additional_charge'] = $this->money($additional);
+
+        $validated['gst_amount'] = $this->money($gst);
+        $validated['processing_fee'] = $this->money($processing);
+        $validated['total_amount'] = $this->money($total);
+
+        // Create or update draft
         if ($token) {
             $draft = PosterDraft::where('token', $token)->firstOrFail();
 
             $sessionToken = $request->session()->get('poster_draft_token');
             if ($sessionToken !== $token) {
-                abort(403, 'This draft does not belong to your session.');
-            }
-
-            // Keep draft as draft unless it was already submitted (we won't downgrade)
-            if (!isset($validated['status'])) {
-                // do nothing
+                abort(403, 'This registration page does not belong to your session.');
             }
 
             $draft->update($validated);
@@ -786,6 +641,10 @@ class PosterRegistrationController extends Controller
             'processing_fee'  => $draft->processing_fee,
             'total_amount'    => $draft->total_amount,
 
+            'acc_count'         => $draft->acc_count,
+            'acc_unit_cost'     => $draft->acc_unit_cost,
+            'additional_charge' => $draft->additional_charge,
+
             'status' => 'submitted',
         ]);
 
@@ -864,6 +723,7 @@ class PosterRegistrationController extends Controller
             //     ->exists();
 
             // return $inDrafts;
+            return false;
         });
 
         return response()->json([
@@ -871,5 +731,29 @@ class PosterRegistrationController extends Controller
             'exists' => $exists,
             'message' => $exists ? 'Email is already registered.' : 'Email is available.',
         ]);
+    }
+
+    // Count non-empty accompanying co-authors
+    private function countAccompanying(array $data): int
+    {
+        $fields = [
+            'acc_co_auth_name_1',
+            'acc_co_auth_name_2',
+            'acc_co_auth_name_3',
+            'acc_co_auth_name_4',
+        ];
+
+        $count = 0;
+        foreach ($fields as $f) {
+            if (!empty(trim((string)($data[$f] ?? '')))) {
+                $count++;
+            }
+        }
+        return $count;
+    }
+
+    private function money(float $v): float
+    {
+        return round($v, 2);
     }
 }

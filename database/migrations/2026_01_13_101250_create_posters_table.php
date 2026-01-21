@@ -94,12 +94,17 @@ return new class extends Migration
             // Payment
             $table->string('paymode', 50)->nullable(); // Credit Card / Paypal / Bank Transfer etc.
             $table->enum('currency', ['INR', 'USD'])->nullable();  // hidden field value has be set on UI based on nationality
-            $table->string('base_amount', 20)->nullable();          // hidden field value has be set on UI based on nationality
-            $table->string('discount_code', 100)->nullable();   // hidden field value has be set on UI based on nationality
-            $table->string('discount_amount', 20)->nullable();          // hidden field value has be set on UI based on nationality
-            $table->string('gst_amount', 20)->nullable();       // hidden field value has be set on UI based on nationality
-            $table->string('processing_fee', 20)->nullable(); // hidden field value has be set on UI based on nationality
-            $table->string('total_amount', 20)->nullable();         // hidden field value has be set on UI based on nationality
+            $table->decimal('base_amount', 15, 2)->default(0);          // hidden field value has be set on UI based on nationality
+            $table->string('discount_code', 25)->nullable();   // hidden field value has be set on UI based on nationality
+            $table->decimal('discount_amount', 15, 2)->default(0);          // hidden field value has be set on UI based on nationality
+            $table->decimal('gst_amount', 15, 2)->default(0);       // hidden field value has be set on UI based on nationality
+            $table->decimal('processing_fee', 15, 2)->default(0); // hidden field value has be set on UI based on nationality
+            $table->decimal('total_amount', 15, 2)->default(0);         // hidden field value has be set on UI based on nationality
+
+            // Accompanying charges tracking
+            $table->unsignedTinyInteger('acc_count')->default(0);          // number of accompanying co-authors
+            $table->decimal('acc_unit_cost', 10, 2)->default(0);           // cost per accompanying (for now = base_amount)
+            $table->decimal('additional_charge', 10, 2)->default(0);       // acc_unit_cost * acc_count
 
             // Operational / audit
             // $table->string('ip', 45)->nullable();
