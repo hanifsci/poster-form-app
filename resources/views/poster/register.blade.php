@@ -311,7 +311,7 @@
                             <div id="lead-email-alert" class="mt-2" style="display:none;"></div>
                         </div>
 
-                        <div class="col-md-8">
+                        <div class="col-md-6">
                             <label class="form-label">College Name/Organisation Name <span class="req">*</span></label>
                             <input class="form-control" name="lead_org" maxlength="250"
                                 value="{{ old('lead_org', $draft->lead_org ?? '') }}" required>
@@ -405,13 +405,13 @@
                                 value="{{ old('pp_email', $draft->pp_email ?? '') }}" required>
                         </div>
 
-                        <div class="col-md-8">
+                        <div class="col-md-6">
                             <label class="form-label">College Name/Organisation Name <span class="req">*</span></label>
                             <input class="form-control" name="pp_org" maxlength="250"
                                 value="{{ old('pp_org', $draft->pp_org ?? '') }}" required>
                         </div>
 
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <label class="form-label">Website</label>
                             <input class="form-control" name="pp_website" maxlength="255"
                                 value="{{ old('pp_website', $draft->pp_website ?? '') }}" placeholder="https://example.com">
@@ -495,7 +495,7 @@
                 <hr class="my-4">
 
                 <h2 class="h5 fw-bold mb-3">Please enter details of Accompanying Co-Author(s) at event</h2>
-                <div class="alert alert-warning py-2 mb-3">
+                <div class="alert alert-warning py-2 mb-2">
                     <i class="fa-solid fa-triangle-exclamation"></i>
                     There will be a additional charges for each accompanying co-author.
                 </div>
@@ -715,6 +715,7 @@
                 return fixed;
             }
 
+            // Inject a small CSS block once (for highlight styling)
             function setTariffHighlight(nat) {
                 const indiaRow = el('tariff-row-india');
                 const intlRow = el('tariff-row-intl');
@@ -731,25 +732,23 @@
                 const select = el('paymode');
                 if (!select) return;
 
-                const existingValue = select.value;
-
-                select.innerHTML = `<option value="" disabled ${existingValue ? '' : 'selected'}>-- Select payment mode --</option>`;
+                select.innerHTML = `<option value="" disabled>-- Select payment mode --</option>`;
 
                 if (nat === 'India') {
                     const opt = document.createElement('option');
                     opt.value = 'CCAvenue (Indian Payments)';
                     opt.textContent = 'CCAvenue (Indian Payments)';
                     select.appendChild(opt);
-
-                    // force correct option
                     select.value = opt.value;
                 } else if (nat === 'International') {
                     const opt = document.createElement('option');
                     opt.value = 'PayPal (International payments)';
                     opt.textContent = 'PayPal (International payments)';
                     select.appendChild(opt);
-
                     select.value = opt.value;
+                } else {
+                    // keep empty
+                    select.selectedIndex = 0;
                 }
             }
 
@@ -760,6 +759,11 @@
                     if (input && input.value.trim() !== '') count++;
                 }
                 return count;
+            }
+
+            function safeNum(v) {
+                const n = Number(v);
+                return Number.isFinite(n) ? n : 0;
             }
 
             function recalc() {
@@ -783,10 +787,11 @@
                     el('total_amount').value = '';
 
                     el('acc_count').value = '0';
-                    el('acc_unit_cost').value = '0';
-                    el('additional_charge').value = '0';
+                    el('acc_unit_cost').value = '0.00';
+                    el('additional_charge').value = '0.00';
 
                     setTariffHighlight(null);
+                    setPaymodeOptions(null);
                     return;
                 }
 
@@ -796,14 +801,16 @@
                 const currency = (nat === 'India') ? 'INR' : 'USD';
                 const base = (nat === 'India') ? INR_BASE : USD_BASE;
 
-                const discount = Number(el('discount_amount')?.value || 0);
+                const discount = safeNum(el('discount_amount')?.value);
 
                 // accompanying
                 const accCount = countAccompanying();
-                const accUnitCost = base; // your current rule: unit cost = base
+                const accUnitCost = base; // current rule: unit cost = base
                 const additional = accUnitCost * accCount;
 
-                const subTotal = (base + additional) - discount;
+                // subtotal = base + additional - discount (never negative)
+                let subTotal = (base + additional) - discount;
+                if (subTotal < 0) subTotal = 0;
 
                 // GST 18% on subtotal
                 const gst = subTotal * GST_RATE;
@@ -820,7 +827,6 @@
                 el('calc-currency').textContent = currency;
                 el('calc-base').textContent = fmt(currency, base);
                 el('calc-additional').textContent = fmt(currency, additional);
-
                 el('calc-gst').textContent = fmt(currency, gst);
 
                 el('calc-proc-label').textContent =
@@ -855,13 +861,12 @@
                 if (input) input.addEventListener('input', recalc);
             }
 
-            // also recalc on load (edit mode)
-            recalc();
-
-            // also when copy co-authors runs, it sets values programmatically - trigger recalc after copy
+            // re-run after copy co-authors button
             const copyBtn = document.getElementById('copyCoToAccBtn');
             if (copyBtn) copyBtn.addEventListener('click', () => setTimeout(recalc, 0));
 
+            // Run on load (edit mode)
+            recalc();
         })();
     </script>
 
@@ -983,7 +988,7 @@
             }
         })();
     </script>
-    <!--  -->
+    <!-- JS for real time count the words for abstract text-->
     <script>
         (function() {
             const textarea = document.getElementById('abstract_text');

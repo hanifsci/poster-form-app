@@ -504,6 +504,7 @@ class PosterRegistrationController extends Controller
 
         // Subtotal = base + additional - discount
         $subTotal = ($baseAmount + $additional) - $discount;
+        if ($subTotal < 0) $subTotal = 0;
 
         // GST = 18% of subtotal
         $gst = $subTotal * 0.18;
