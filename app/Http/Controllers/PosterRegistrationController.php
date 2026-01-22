@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Validation\ValidationException;
 
 class PosterRegistrationController extends Controller
 {
@@ -311,6 +313,9 @@ class PosterRegistrationController extends Controller
     public function storeDraft(Request $request)
     {
         $validated = $request->validate([
+
+            'g-recaptcha-response' => ['required'],
+
             'token' => ['nullable', 'uuid'],
 
             // Core
@@ -462,6 +467,20 @@ class PosterRegistrationController extends Controller
             'additional_charge' => ['nullable', 'numeric', 'min:0'],
         ]);
 
+        $recaptcha = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
+            'secret'   => config('services.recaptcha.secret_key'),
+            'response' => $request->input('g-recaptcha-response'),
+            'remoteip' => $request->ip(), // optional
+        ]);
+
+        $data = $recaptcha->json();
+
+        if (!($data['success'] ?? false)) {
+            throw ValidationException::withMessages([
+                'g-recaptcha-response' => 'reCAPTCHA verification failed. Please try again.',
+            ]);
+        }
+
         $token = $validated['token'] ?? null;
         unset($validated['token']);
 
@@ -470,7 +489,8 @@ class PosterRegistrationController extends Controller
 
         /*
     |--------------------------------------------------------------------------
-    | SERVER-SIDE AUTHORITATIVE PRICING (ADD HERE)
+    | SERVER-SIDE AUTHORITATIVE PRICING (ADD HERE) 
+    | egs: base amount, discount, gst, processing fee, total
     |--------------------------------------------------------------------------
     | We recompute pricing based on nationality + accompanying count so users
     | cannot manipulate hidden fields.

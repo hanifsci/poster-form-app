@@ -640,7 +640,19 @@
 
         </div>
     </div>
-    {{-- You can add hidden inputs here later when UI sets them. --}}
+
+    {{-- reCAPTCHA --}}
+    <div class="mb-3">
+        <div class="g-recaptcha" data-sitekey="{{ config('services.recaptcha.site_key') }}"></div>
+
+        @error('g-recaptcha-response')
+            <div class="text-danger mt-2">{{ $message }}</div>
+        @enderror
+    </div>
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+
+
+    {{-- continue button --}}
 
     <div class="d-flex justify-content-end gap-2">
         <button type="submit" class="btn btn-primary btn-lg">
